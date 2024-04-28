@@ -1,0 +1,69 @@
+import yaml
+import argparse
+
+def generate_yaml(secret_name, secret_data, namespace):
+    # Secret YAML data with updated namespace and existing data
+    secret_yaml = {
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {
+            "name": secret_name,
+            "namespace": namespace
+        },
+        "type": "Opaque",
+        "data": {key: value.encode('utf-8').hex() for key, value in secret_data.items()}  # Encoding existing data to hex
+    }
+
+    # UaaClient YAML data
+    uaa_client_yaml = {
+        "apiVersion": "security.grid.digital.ge.com/v1beta1",
+        "kind": "UaaClient",
+        "metadata": {
+            "name": secret_name,
+            "namespace": namespace
+        },
+        "spec": {
+            "secretName": secret_name,
+            "accessTokenValidity": 36000,
+            "refreshTokenValidity": 72000,
+            "tokenSalt": "fdijfos",
+            "authorities": ["systemadmin"],
+            "authorizedGrantTypes": ["client_credentials"]
+        }
+    }
+
+    # Combine YAML documents
+    yaml_documents = [secret_yaml, uaa_client_yaml]
+
+    # Generate YAML content
+    yaml_content = "\n---\n".join([yaml.dump(doc, default_flow_style=False) for doc in yaml_documents])
+    return yaml_content
+
+def write_to_file(content, output_file):
+    try:
+        with open(output_file, 'w') as file:
+            file.write(content)
+        print(f"YAML content successfully written to {output_file}")
+    except Exception as e:
+        print(f"Error occurred while writing to file: {e}")
+
+def main():
+    parser = argparse.ArgumentParser(description='Generate YAML for Secret and UaaClient.')
+    parser.add_argument('--secret-name', type=str, default='new-site-operator-demo-admin', help='Name for the Secret and UaaClient')
+    parser.add_argument('--namespace', type=str, default='new-foundation-cluster-zerotrust', help='Namespace for the Secret and UaaClient')
+    parser.add_argument('--output-file', type=str, default='output.yaml', help='Output file to write YAML content')
+    args = parser.parse_args()
+
+    # Existing Secret data
+    existing_secret_data = {
+        "secret": "site-operator-demo-admin-secret"
+    }
+
+    # Generate YAML content
+    yaml_content = generate_yaml(args.secret_name, existing_secret_data, args.namespace)
+
+    # Write YAML content to file
+    write_to_file(yaml_content, args.output_file)
+
+if __name__ == "__main__":
+    main()
