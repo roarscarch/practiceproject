@@ -57,3 +57,28 @@ If you didn't include inputReader.nextLine(), and let's say you had another next
 
 In summary, including inputReader.nextLine() after reading an integer using nextInt() is a common practice to handle the newline character left in the input buffer and prevent any unintended consequences in subsequent input operations.
 * */
+
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: site-operator-demo-admin
+  namespace: foundation-cluster-zerotrust
+type: Opaque
+stringData:
+  secret: site-operator-demo-admin-secret
+---
+apiVersion: security.grid.digital.ge.com/v1beta1
+kind: UaaClient
+metadata:
+  name: site-operator-demo-admin
+  namespace: foundation-cluster-zerotrust
+spec:
+  secretName: site-operator-demo-admin
+  accessTokenValidity: 36000 # Optional, time in seconds
+  refreshTokenValidity: 72000 # Optional, time in seconds
+  tokenSalt: fdijfos # Optional, default webhook will generate random string if value is empty
+  authorities: # Mandatory
+    - systemadmin
+  authorizedGrantTypes: # Mandatory
+    - client_credentials
